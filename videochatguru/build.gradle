@@ -3,7 +3,7 @@ apply plugin: 'kotlin-android'
 
 def versionMajor = 0
 def versionMinor = 1
-def versionPatch = 2
+def versionPatch = 4
 
 android {
     compileSdkVersion versions.compileSdk
@@ -14,7 +14,6 @@ android {
         versionCode 1
         versionName "${versionMajor}.${versionMinor}.${versionPatch}"
         consumerProguardFiles 'proguard-rules.pro'
-
     }
     buildTypes {
         release {
@@ -30,11 +29,21 @@ android {
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
-    buildToolsVersion '26.0.2'
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+
+        kotlinOptions {
+            jvmTarget = "1.8"
+        }
+    }
+
+    buildToolsVersion '27.0.3'
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     testCompile test.junit
     testCompile test.mockito
@@ -42,8 +51,8 @@ dependencies {
         exclude group: 'org.jetbrains.kotlin'
     }
 
-    compile libs.kotlinStdlib
-    compile libs.webRTC
+    implementation libs.kotlinStdlib
+    implementation libs.webRTC
 }
 repositories {
     mavenCentral()

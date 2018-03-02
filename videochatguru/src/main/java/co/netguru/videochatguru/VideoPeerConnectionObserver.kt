@@ -41,7 +41,7 @@ internal class VideoPeerConnectionObserver(
         }
         if (mediaStream.videoTracks.size == 1) {
             mediaStream.preservedVideoTracks
-            val remoteVideoTrack = mediaStream.videoTracks.first
+            val remoteVideoTrack = mediaStream.videoTracks.first()
             remoteVideoListener.onAddRemoteVideoStream(remoteVideoTrack)
         }
 

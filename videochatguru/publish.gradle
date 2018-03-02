@@ -5,9 +5,9 @@ ext {
     bintrayName = 'VideoChatGuru'
     artifact = 'videochatguru'
     artifactGroupName = 'videochatguru' // can be the same as artifact
-    packageName = 'co.netguru'
+    packageName = 'com.github.devjn'
     libraryVersion = android.defaultConfig.versionName // optionally hardcode with 'x.y.z' format
-    publishedGroupId = "$packageName.$artifactGroupName"
+    publishedGroupId = "$packageName"
     libraryName = 'VideoChatGuru'
     libraryDescription = 'VideoChatGuru is an open source library available under a standard licence. Everyone can access and leverage it in their applications and take video chatting to the next level. On top of that, you can have full control over what’s in the app as there is no default external integration unless you decide to use one.'
 

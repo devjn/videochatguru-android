@@ -1,3 +1,5 @@
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+
 package co.netguru.videochatguru
 
 import android.content.Context
@@ -33,7 +35,7 @@ open class WebRtcClient(context: Context,
                         hardwareAcceleration: Boolean = true,
                         booleanAudioConstraints: WebRtcConstraints<BooleanAudioConstraints, Boolean>? = null,
                         integerAudioConstraints: WebRtcConstraints<IntegerAudioConstraints, Int>? = null,
-                        peerConnectionConstraints: WebRtcConstraints<PeerConnectionConstraints, Boolean>? = null,
+                        val rtcConfig: PeerConnection.RTCConfiguration = PeerConnectionRTCConfiguration.getDafault(),
                         offerAnswerConstraints: WebRtcConstraints<OfferAnswerConstraints, Boolean>? = null) : RemoteVideoListener {
 
     companion object {
@@ -80,16 +82,9 @@ open class WebRtcClient(context: Context,
         }
     }
 
-    private val peerConnectionConstraints by lazy {
-        WebRtcConstraints<PeerConnectionConstraints, Boolean>().apply {
-            addMandatoryConstraint(PeerConnectionConstraints.DTLS_SRTP_KEY_AGREEMENT_CONSTRAINT, true)
-            addMandatoryConstraint(PeerConnectionConstraints.GOOG_CPU_OVERUSE_DETECTION, true)
-        }
-    }
-
     private val videoCameraCapturer = WebRtcUtils.createCameraCapturerWithFrontAsDefault(context)
 
-    var cameraEnabled = true
+    var cameraEnabled = false
         set(isEnabled) {
             field = isEnabled
             singleThreadExecutor.execute {
@@ -127,9 +122,6 @@ open class WebRtcClient(context: Context,
         integerAudioConstraints?.let {
             audioIntegerConstraints += it
         }
-        peerConnectionConstraints?.let {
-            this.peerConnectionConstraints += it
-        }
         offerAnswerConstraints?.let {
             this.offerAnswerConstraints += it
         }
@@ -139,7 +131,15 @@ open class WebRtcClient(context: Context,
     }
 
     private fun initialize() {
-        peerConnectionFactory = PeerConnectionFactory(PeerConnectionFactory.Options())
+        val defaultVideoEncoderFactory = DefaultVideoEncoderFactory(
+                eglBase.eglBaseContext, /* enableIntelVp8Encoder */true, /* enableH264HighProfile */true)
+        val defaultVideoDecoderFactory = DefaultVideoDecoderFactory(eglBase.eglBaseContext)
+
+        peerConnectionFactory = PeerConnectionFactory.builder()
+                .setOptions(PeerConnectionFactory.Options())
+                .setVideoEncoderFactory(defaultVideoEncoderFactory)
+                .setVideoDecoderFactory(defaultVideoDecoderFactory)
+                .createPeerConnectionFactory()
 
         if (videoCameraCapturer != null) {
             peerConnectionFactory.setVideoHwAccelerationOptions(eglBase.eglBaseContext, eglBase.eglBaseContext)
@@ -165,8 +165,8 @@ open class WebRtcClient(context: Context,
                                  webRtcAnsweringPartyListener: WebRtcAnsweringPartyListener) {
         singleThreadExecutor.execute {
             this.peerConnectionListener = peerConnectionListener
-            val rtcConfig = PeerConnection.RTCConfiguration(iceServers)
-            peerConnection = peerConnectionFactory.createPeerConnection(rtcConfig, getPeerConnectionMediaConstraints(), videoPeerConnectionListener)
+            rtcConfig.iceServers = iceServers
+            peerConnection = peerConnectionFactory.createPeerConnection(rtcConfig, videoPeerConnectionListener)
             isPeerConnectionInitialized = true
 
             val localMediaStream = peerConnectionFactory.createLocalMediaStream(getCounterStringValueAndIncrement())
@@ -221,7 +221,20 @@ open class WebRtcClient(context: Context,
                 localVideoTrack?.addRenderer(localVideoRenderer)
             }
         }
+    }
 
+    /**
+     * Attach [SurfaceViewRenderer] to webrtc client used for rendering local view with custom [RendererCommon.GlDrawer].
+     */
+    fun attachLocalView(localView: SurfaceViewRenderer, configAttributes: IntArray, drawer: RendererCommon.GlDrawer) {
+        mainThreadHandler.post {
+            localView.init(eglBase.eglBaseContext, null, configAttributes, drawer)
+            this@WebRtcClient.localView = localView
+            singleThreadExecutor.execute {
+                localVideoRenderer = VideoRenderer(localView)
+                localVideoTrack?.addRenderer(localVideoRenderer)
+            }
+        }
     }
 
     fun detachLocalView() {
@@ -372,10 +385,6 @@ open class WebRtcClient(context: Context,
 
     private fun getAudioMediaConstraints() = MediaConstraints().apply {
         addConstraints(audioBooleanConstraints, audioIntegerConstraints)
-    }
-
-    private fun getPeerConnectionMediaConstraints() = MediaConstraints().apply {
-        addConstraints(peerConnectionConstraints)
     }
 
     private fun getOfferAnswerConstraints() = MediaConstraints().apply {

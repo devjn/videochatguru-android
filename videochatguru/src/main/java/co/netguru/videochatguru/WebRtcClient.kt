@@ -25,8 +25,8 @@ import java.util.concurrent.atomic.AtomicInteger
  * @param hardwareAcceleration set whether client should use hardware acceleration, enabled by default
  * @param booleanAudioConstraints enables overwriting default [BooleanAudioConstraints] used by client
  * @param integerAudioConstraints enables overwriting default [IntegerAudioConstraints] used by client
- * @param peerConnectionConstraints enables overwriting default [PeerConnectionConstraints] used by client
  * @param offerAnswerConstraints enables overwriting default [OfferAnswerConstraints] used by client
+ * @param rtcConfig enables overwriting default [PeerConnection.RTCConfiguration] used by client
  */
 open class WebRtcClient(context: Context,
                         private val localVideoWidth: Int = 1280,
@@ -35,8 +35,8 @@ open class WebRtcClient(context: Context,
                         hardwareAcceleration: Boolean = true,
                         booleanAudioConstraints: WebRtcConstraints<BooleanAudioConstraints, Boolean>? = null,
                         integerAudioConstraints: WebRtcConstraints<IntegerAudioConstraints, Int>? = null,
-                        val rtcConfig: PeerConnection.RTCConfiguration = PeerConnectionRTCConfiguration.getDafault(),
-                        offerAnswerConstraints: WebRtcConstraints<OfferAnswerConstraints, Boolean>? = null) : RemoteVideoListener {
+                        offerAnswerConstraints: WebRtcConstraints<OfferAnswerConstraints, Boolean>? = null,
+                        private val rtcConfig: PeerConnection.RTCConfiguration = PeerConnectionRTCConfiguration.getDafault()) : RemoteVideoListener {
 
     companion object {
         private val TAG = WebRtcClient::class.java.simpleName

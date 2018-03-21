@@ -3,7 +3,7 @@ apply plugin: 'kotlin-android'
 
 def versionMajor = 0
 def versionMinor = 1
-def versionPatch = 4
+def versionPatch = 5
 
 android {
     compileSdkVersion versions.compileSdk
@@ -39,20 +39,19 @@ android {
         }
     }
 
-    buildToolsVersion '27.0.3'
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    testCompile test.junit
-    testCompile test.mockito
-    testCompile(test.mockitoKotlin) {
+    testImplementation test.junit
+    testImplementation test.mockito
+    testImplementation(test.mockitoKotlin) {
         exclude group: 'org.jetbrains.kotlin'
     }
 
     implementation libs.kotlinStdlib
-    implementation libs.webRTC
+    api libs.webRTC
 }
 repositories {
     mavenCentral()

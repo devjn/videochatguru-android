@@ -4,13 +4,13 @@ apply from: 'buildsystem/bitrise.gradle'
 
 ext {
     globalVersionCode = isBitrise ? Integer.parseInt(bitrise.io.buildNumber) : 1
-    globalVersionName = '0.1.0'
+    globalVersionName = '0.1.5'
 }
 
 buildscript {
 
     ext.versions = [
-            kotlin    : '1.2.21',
+            kotlin    : '1.2.30',
             buildTools: '27.0.3',
             minSdk    : 16,
             compileSdk: 27,

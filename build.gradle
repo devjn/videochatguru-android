@@ -4,13 +4,13 @@ apply from: 'buildsystem/bitrise.gradle'
 
 ext {
     globalVersionCode = isBitrise ? Integer.parseInt(bitrise.io.buildNumber) : 1
-    globalVersionName = '0.1.5'
+    globalVersionName = '0.1.6'
 }
 
 buildscript {
 
     ext.versions = [
-            kotlin    : '1.2.30',
+            kotlin    : '1.2.31',
             buildTools: '27.0.3',
             minSdk    : 16,
             compileSdk: 27,
@@ -21,10 +21,10 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.1'
+        classpath 'com.android.tools.build:gradle:3.1.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files

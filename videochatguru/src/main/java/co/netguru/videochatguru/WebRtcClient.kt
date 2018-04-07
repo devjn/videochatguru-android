@@ -166,7 +166,7 @@ open class WebRtcClient(context: Context,
         singleThreadExecutor.execute {
             this.peerConnectionListener = peerConnectionListener
             rtcConfig.iceServers = iceServers
-            peerConnection = peerConnectionFactory.createPeerConnection(rtcConfig, videoPeerConnectionListener)
+            peerConnection = peerConnectionFactory.createPeerConnection(rtcConfig, videoPeerConnectionListener)!!
             isPeerConnectionInitialized = true
 
             val localMediaStream = peerConnectionFactory.createLocalMediaStream(getCounterStringValueAndIncrement())

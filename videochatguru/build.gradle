@@ -3,7 +3,8 @@ apply plugin: 'kotlin-android'
 
 def versionMajor = 0
 def versionMinor = 1
-def versionPatch = 6
+def versionPatch = 7
+def versionWebRTC = 23171
 
 android {
     compileSdkVersion versions.compileSdk
@@ -12,7 +13,7 @@ android {
     defaultConfig {
         minSdkVersion versions.minSdk
         versionCode 1
-        versionName "${versionMajor}.${versionMinor}.${versionPatch}"
+        versionName "${versionMajor}.${versionMinor}.${versionPatch}.${versionWebRTC}"
         consumerProguardFiles 'proguard-rules.pro'
     }
     buildTypes {

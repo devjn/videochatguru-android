@@ -13,6 +13,7 @@ import org.webrtc.*
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
+
 /**
  * WebRTC client wraps webRTC implementation simplifying implementation of video chat. WebRTC client
  * uses set of default WebRTC constraints that should suffice most of the use cases if you need to overwrite
@@ -59,9 +60,11 @@ open class WebRtcClient(context: Context,
     private lateinit var localAudioTrack: AudioTrack
 
     private var remoteView: SurfaceViewRenderer? = null
-    private var remoteVideoRenderer: VideoRenderer? = null
+    //    private var remoteVideoRenderer: VideoRenderer? = null
     private var localView: SurfaceViewRenderer? = null
-    private var localVideoRenderer: VideoRenderer? = null
+    //    private var localVideoRenderer: VideoRenderer? = null
+    private val remoteProxyRenderer = ProxyVideoSink()
+    private val localProxyVideoSink = ProxyVideoSink()
 
     private val eglBase = EglBase.create()
 
@@ -183,9 +186,7 @@ open class WebRtcClient(context: Context,
     override fun onAddRemoteVideoStream(remoteVideoTrack: VideoTrack) {
         singleThreadExecutor.execute {
             this.remoteVideoTrack = remoteVideoTrack
-            remoteVideoRenderer?.let {
-                remoteVideoTrack.addRenderer(it)
-            }
+            remoteVideoTrack.addSink(remoteProxyRenderer)
         }
     }
 
@@ -203,22 +204,8 @@ open class WebRtcClient(context: Context,
             remoteView.init(eglBase.eglBaseContext, null)
             this@WebRtcClient.remoteView = remoteView
             singleThreadExecutor.execute {
-                remoteVideoRenderer = VideoRenderer(remoteView)
-                remoteVideoTrack?.addRenderer(remoteVideoRenderer)
-            }
-        }
-    }
-
-    /**
-     * Attach [SurfaceViewRenderer] to webrtc client used for rendering local view.
-     */
-    fun attachLocalView(localView: SurfaceViewRenderer) {
-        mainThreadHandler.post {
-            localView.init(eglBase.eglBaseContext, null)
-            this@WebRtcClient.localView = localView
-            singleThreadExecutor.execute {
-                localVideoRenderer = VideoRenderer(localView)
-                localVideoTrack?.addRenderer(localVideoRenderer)
+                remoteProxyRenderer.setTarget(remoteView)
+                remoteVideoTrack?.addSink(remoteProxyRenderer)
             }
         }
     }
@@ -226,13 +213,14 @@ open class WebRtcClient(context: Context,
     /**
      * Attach [SurfaceViewRenderer] to webrtc client used for rendering local view with custom [RendererCommon.GlDrawer].
      */
-    fun attachLocalView(localView: SurfaceViewRenderer, configAttributes: IntArray, drawer: RendererCommon.GlDrawer) {
+    @JvmOverloads
+    fun attachLocalView(localView: SurfaceViewRenderer, configAttributes: IntArray = EglBase.CONFIG_PLAIN, drawer: RendererCommon.GlDrawer = GlRectDrawer()) {
         mainThreadHandler.post {
             localView.init(eglBase.eglBaseContext, null, configAttributes, drawer)
             this@WebRtcClient.localView = localView
             singleThreadExecutor.execute {
-                localVideoRenderer = VideoRenderer(localView)
-                localVideoTrack?.addRenderer(localVideoRenderer)
+                localProxyVideoSink.setTarget(localView)
+                localVideoTrack?.addSink(localProxyVideoSink)
             }
         }
     }
@@ -243,11 +231,7 @@ open class WebRtcClient(context: Context,
             localView = null
         }
         singleThreadExecutor.execute {
-            localVideoRenderer?.let {
-                localVideoTrack?.removeRenderer(it)
-                it.dispose()
-                localVideoRenderer = null
-            }
+            localVideoTrack?.removeSink(localProxyVideoSink)
         }
     }
 
@@ -257,11 +241,7 @@ open class WebRtcClient(context: Context,
             remoteView = null
         }
         singleThreadExecutor.execute {
-            remoteVideoRenderer?.let {
-                remoteVideoTrack?.removeRenderer(it)
-                it.dispose()
-                remoteVideoRenderer = null
-            }
+            remoteVideoTrack?.removeSink(remoteProxyRenderer)
         }
     }
 
@@ -394,4 +374,20 @@ open class WebRtcClient(context: Context,
     private fun getOfferAnswerRestartConstraints() = getOfferAnswerConstraints().apply {
         mandatory.add(OfferAnswerConstraints.ICE_RESTART.toKeyValuePair(true))
     }
+
+
+    private class ProxyVideoSink : VideoSink {
+        private var target: VideoSink? = null
+        @Synchronized
+        override fun onFrame(frame: VideoFrame) {
+            target?.onFrame(frame)
+                    ?: Logging.d(TAG, "Dropping frame in proxy because target is null.")
+        }
+
+        @Synchronized
+        fun setTarget(target: VideoSink) {
+            this.target = target
+        }
+    }
+
 }

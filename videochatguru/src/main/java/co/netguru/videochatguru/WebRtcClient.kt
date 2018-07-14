@@ -231,7 +231,11 @@ open class WebRtcClient(context: Context,
             localView = null
         }
         singleThreadExecutor.execute {
-            localVideoTrack?.removeSink(localProxyVideoSink)
+            try {
+                localVideoTrack?.removeSink(localProxyVideoSink)
+            } catch (e: Exception) {
+                Logger.e(TAG, "Known Sink removed on empty", e)
+            }
         }
     }
 
@@ -241,7 +245,11 @@ open class WebRtcClient(context: Context,
             remoteView = null
         }
         singleThreadExecutor.execute {
-            remoteVideoTrack?.removeSink(remoteProxyRenderer)
+            try {
+                remoteVideoTrack?.removeSink(remoteProxyRenderer)
+            } catch (e: Exception) {
+                Logger.e(TAG, "Known Sink removed on empty", e)
+            }
         }
     }
 
@@ -381,7 +389,7 @@ open class WebRtcClient(context: Context,
         @Synchronized
         override fun onFrame(frame: VideoFrame) {
             target?.onFrame(frame)
-                    ?: Logging.d(TAG, "Dropping frame in proxy because target is null.")
+                    ?: Logging.v(TAG, "Dropping frame in proxy because target is null.")
         }
 
         @Synchronized

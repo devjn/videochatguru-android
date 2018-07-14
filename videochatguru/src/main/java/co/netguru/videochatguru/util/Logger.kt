@@ -15,4 +15,9 @@ internal object Logger {
     fun e(tag: String, message: String) {
         if (loggingEnabled) Log.e("$PREFIX $tag", message)
     }
+
+    fun e(tag: String, message: String, exception: Exception) {
+        if (loggingEnabled) Log.e("$PREFIX $tag", message, exception)
+    }
+
 }

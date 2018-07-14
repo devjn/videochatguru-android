@@ -1,6 +1,7 @@
 ext {
     // Versions
-    webRTCVersion = '1.0.23171'
+    webRTCMinor = '23869'
+    webRTCVersion = "1.0.$webRTCMinor"
 
     libs = [
             kotlinStdlib    : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$versions.kotlin",

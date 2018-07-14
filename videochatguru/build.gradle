@@ -3,8 +3,8 @@ apply plugin: 'kotlin-android'
 
 def versionMajor = 0
 def versionMinor = 1
-def versionPatch = 7
-def versionWebRTC = 23171
+def versionPatch = 8
+def versionWebRTC = webRTCMinor
 
 android {
     compileSdkVersion versions.compileSdk

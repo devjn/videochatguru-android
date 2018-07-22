@@ -146,7 +146,7 @@ open class WebRtcClient(context: Context,
 
         if (videoCameraCapturer != null) {
             peerConnectionFactory.setVideoHwAccelerationOptions(eglBase.eglBaseContext, eglBase.eglBaseContext)
-            videoSource = peerConnectionFactory.createVideoSource(videoCameraCapturer)
+            videoSource = peerConnectionFactory.createVideoSource(false)
             localVideoTrack = peerConnectionFactory.createVideoTrack(counter.getAndIncrement().toString(), videoSource)
             enableVideo(cameraEnabled, videoCameraCapturer)
         }

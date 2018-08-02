@@ -1,6 +1,6 @@
 ext {
     // Versions
-    webRTCMinor = '23995'
+    webRTCMinor = '24139'
     webRTCVersion = "1.0.$webRTCMinor"
 
     libs = [

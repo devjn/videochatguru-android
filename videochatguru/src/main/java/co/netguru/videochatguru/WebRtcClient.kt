@@ -14,12 +14,14 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
 
+
+
 /**
  * WebRTC client wraps webRTC implementation simplifying implementation of video chat. WebRTC client
  * uses set of default WebRTC constraints that should suffice most of the use cases if you need to overwrite
  * those you can pass your own [WebRtcConstraints] collection of constraints.
  *
- * @param context used only during camera initialization, not stored internally
+ * @param appContext used only during camera initialization, not stored internally
  * @param localVideoWidth width of video recorded by this client
  * @param localVideoHeight height of video recorded by this client
  * @param localVideoFps frames per second recorded by this client
@@ -29,7 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * @param offerAnswerConstraints enables overwriting default [OfferAnswerConstraints] used by client
  * @param rtcConfig enables overwriting default [PeerConnection.RTCConfiguration] used by client
  */
-open class WebRtcClient(context: Context,
+open class WebRtcClient(private val appContext: Context,
                         private val localVideoWidth: Int = 1280,
                         private val localVideoHeight: Int = 720,
                         private val localVideoFps: Int = 24,
@@ -85,7 +87,7 @@ open class WebRtcClient(context: Context,
         }
     }
 
-    private val videoCameraCapturer = WebRtcUtils.createCameraCapturerWithFrontAsDefault(context)
+    private val videoCameraCapturer = WebRtcUtils.createCameraCapturerWithFrontAsDefault(appContext)
 
     var cameraEnabled = false
         set(isEnabled) {
@@ -114,9 +116,8 @@ open class WebRtcClient(context: Context,
 
     init {
         PeerConnectionFactory.initialize(
-                PeerConnectionFactory.InitializationOptions.builder(context)
+                PeerConnectionFactory.InitializationOptions.builder(appContext)
                         .setEnableInternalTracer(ENABLE_INTERNAL_TRACER)
-                        .setEnableVideoHwAcceleration(hardwareAcceleration)
                         .createInitializationOptions()
         )
         booleanAudioConstraints?.let {
@@ -145,8 +146,10 @@ open class WebRtcClient(context: Context,
                 .createPeerConnectionFactory()
 
         if (videoCameraCapturer != null) {
-            peerConnectionFactory.setVideoHwAccelerationOptions(eglBase.eglBaseContext, eglBase.eglBaseContext)
-            videoSource = peerConnectionFactory.createVideoSource(false)
+            val surfaceTextureHelper = SurfaceTextureHelper.create("CaptureThread", eglBase.eglBaseContext)
+            videoSource = peerConnectionFactory.createVideoSource(videoCameraCapturer.isScreencast)
+            videoCameraCapturer.initialize(surfaceTextureHelper, appContext, videoSource?.capturerObserver)
+
             localVideoTrack = peerConnectionFactory.createVideoTrack(counter.getAndIncrement().toString(), videoSource)
             enableVideo(cameraEnabled, videoCameraCapturer)
         }

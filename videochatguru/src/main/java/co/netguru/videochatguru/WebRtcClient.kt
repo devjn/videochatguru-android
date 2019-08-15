@@ -64,9 +64,11 @@ open class WebRtcClient(private val appContext: Context,
     private var remoteView: SurfaceViewRenderer? = null
     //    private var remoteVideoRenderer: VideoRenderer? = null
     private var localView: SurfaceViewRenderer? = null
+    private var floatingView: SurfaceViewRenderer? = null
     //    private var localVideoRenderer: VideoRenderer? = null
     private val remoteProxyRenderer = ProxyVideoSink()
     private val localProxyVideoSink = ProxyVideoSink()
+    private val floatingProxyRenderer = ProxyVideoSink()
 
     private val eglBase = EglBase.create()
 
@@ -190,6 +192,7 @@ open class WebRtcClient(private val appContext: Context,
         singleThreadExecutor.execute {
             this.remoteVideoTrack = remoteVideoTrack
             remoteVideoTrack.addSink(remoteProxyRenderer)
+            remoteVideoTrack.addSink(floatingProxyRenderer)
         }
     }
 
@@ -228,6 +231,21 @@ open class WebRtcClient(private val appContext: Context,
         }
     }
 
+    /**
+     * Attach [SurfaceViewRenderer] to webrtc client used for rendering floating view.
+     */
+    @JvmOverloads
+    fun attachFloatingView(videoView: SurfaceViewRenderer, configAttributes: IntArray = EglBase.CONFIG_PLAIN, drawer: RendererCommon.GlDrawer = GlRectDrawer()) {
+        mainThreadHandler.post {
+            videoView.init(eglBase.eglBaseContext, null, configAttributes, drawer)
+            this@WebRtcClient.floatingView = videoView
+            singleThreadExecutor.execute {
+                floatingProxyRenderer.setTarget(videoView)
+                remoteVideoTrack?.addSink(floatingProxyRenderer)
+            }
+        }
+    }
+
     fun detachLocalView() {
         mainThreadHandler.post {
             localView?.release()
@@ -250,6 +268,20 @@ open class WebRtcClient(private val appContext: Context,
         singleThreadExecutor.execute {
             try {
                 remoteVideoTrack?.removeSink(remoteProxyRenderer)
+            } catch (e: Exception) {
+                Logger.e(TAG, "Known Sink removed on empty", e)
+            }
+        }
+    }
+
+    fun detachFloatingView() {
+        mainThreadHandler.post {
+            floatingView?.release()
+            floatingView = null
+        }
+        singleThreadExecutor.execute {
+            try {
+                remoteVideoTrack?.removeSink(floatingProxyRenderer)
             } catch (e: Exception) {
                 Logger.e(TAG, "Known Sink removed on empty", e)
             }
